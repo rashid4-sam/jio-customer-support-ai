@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jio AI Assistant - Your Digital Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .jio-gradient {
+            background: linear-gradient(135deg, #0a2463 0%, #3e92cc 50%, #00b4d8 100%);
+        }
+        
+        .chat-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+        }
+        
+        .chat-button {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0a2463 0%, #3e92cc 50%, #00b4d8 100%);
+            box-shadow: 0 10px 25px rgba(10, 36, 99, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            animation: pulse-shadow 2s infinite;
+        }
+        
+        .chat-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 35px rgba(10, 36, 99, 0.4);
+        }
+        
+        @keyframes pulse-shadow {
+            0%, 100% {
+                box-shadow: 0 10px 25px rgba(10, 36, 99, 0.3), 0 0 0 0 rgba(62, 146, 204, 0.7);
+            }
+            50% {
+                box-shadow: 0 10px 25px rgba(10, 36, 99, 0.3), 0 0 0 15px rgba(62, 146, 204, 0);
+            }
+        }
+        
+        .chat-panel {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            width: 420px;
+            max-width: calc(100vw - 48px);
+            height: 650px;
+            max-height: calc(100vh - 150px);
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 9998;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .chat-panel.active {
+            display: flex;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+        
+        .message {
+            margin-bottom: 16px;
+            animation: messageSlide 0.3s ease-out;
+        }
+        
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-bot {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        
+        .message-user {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            flex-direction: row-reverse;
+        }
+        
+        .message-bot .message-content {
+            background: #f3f4f6;
+            color: #1f2937;
+            border-radius: 16px 16px 16px 4px;
+            padding: 12px 16px;
+            max-width: 80%;
+        }
+        
+        .message-user .message-content {
+            background: linear-gradient(135deg, #0a2463 0%, #3e92cc 100%);
+            color: white;
+            border-radius: 16px 16px 4px 16px;
+            padding: 12px 16px;
+            max-width: 80%;
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .avatar-bot {
+            background: linear-gradient(135deg, #0a2463 0%, #3e92cc 100%);
+        }
+        
+        .avatar-user {
+            background: #e5e7eb;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px;
+        }
+        
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .quick-questions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 20px;
+            background: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .quick-question-btn {
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-question-btn:hover {
+            background: linear-gradient(135deg, #0a2463 0%, #3e92cc 100%);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            border: 3px solid white;
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #3e92cc;
+            border-radius: 3px;
+        }
+
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .shine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Main Website Content -->
+    <div class="min-h-screen">
+        <!-- Header/Navbar -->
+        <nav class="jio-gradient shadow-lg sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-10 h-10 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                            <div>
+                                <h1 class="text-2xl font-bold text-white tracking-tight">Jio AI Assistant</h1>
+                                <p class="text-xs text-blue-100">Powered by Advanced RAG Technology</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="#" class="text-white hover:text-blue-200 transition text-sm font-medium">Home</a>
+                        <a href="#features" class="text-white hover:text-blue-200 transition text-sm font-medium">Features</a>
+                        <a href="#about" class="text-white hover:text-blue-200 transition text-sm font-medium">About</a>
+                        <button onclick="toggleChat()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition text-sm">
+                            Chat Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="jio-gradient relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+                <div class="absolute bottom-20 right-20 w-96 h-96 bg-blue-300 rounded-full blur-3xl"></div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 relative">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div class="text-white space-y-6">
+                        <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                            <span class="w-2 h-2 bg-green-400 rounded-full pulse-ring"></span>
+                            <span class="text-sm font-medium">AI-Powered • Real-time • Intelligent</span>
+                        </div>
+                        
+                        <h1 class="text-5xl lg:text-6xl font-bold leading-tight">
+                            Your Intelligent <br/>
+                            <span class="text-blue-200">Jio Information</span><br/>
+                            Assistant
+                        </h1>
+                        
+                        <p class="text-xl text-blue-100 leading-relaxed">
+                            Get instant answers about Jio plans, services, devices, and more. Our AI-powered chatbot understands your queries and provides accurate information from Jio's comprehensive knowledge base.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4 pt-4">
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm">24/7 Available</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm">Instant Responses</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <span class="text-sm">Accurate Information</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <button onclick="toggleChat()" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 transition transform hover:scale-105 shadow-xl">
+                                Start Chatting Now →
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="relative shine">
+                            <img src="https://res.cloudinary.com/dtsuvx8dz/image/upload/v1712987021/ghzgwi4mxevqrt0lxefw.png" 
+                                 class="w-full max-w-lg mx-auto drop-shadow-2xl transform hover:scale-105 transition duration-300" 
+                                 alt="AI Assistant">
+                        </div>
+                        <div class="absolute -bottom-4 -left-4 w-32 h-32 bg-blue-400 rounded-full blur-2xl opacity-50"></div>
+                        <div class="absolute -top-4 -right-4 w-40 h-40 bg-cyan-400 rounded-full blur-2xl opacity-50"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-16 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">What Can I Help You With?</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">Ask me anything about Jio services, plans, devices, or support</p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="w-12 h-12 jio-gradient rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Mobile Plans</h3>
+                        <p class="text-gray-600 text-sm">Prepaid, postpaid, 5G plans, and recharge options</p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="w-12 h-12 jio-gradient rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">JioFiber & Home</h3>
+                        <p class="text-gray-600 text-sm">Broadband plans, JioAirFiber, and home services</p>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-2xl hover:shadow-lg transition">
+                        <div class="w-12 h-12 jio-gradient rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Devices & Apps</h3>
+                        <p class="text-gray-600 text-sm">JioPhone, JioBook, apps, and accessories</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-16 bg-gradient-to-b from-gray-50 to-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">About This AI Assistant</h2>
+                    <p class="text-gray-600 max-w-3xl mx-auto">
+                        Powered by advanced RAG (Retrieval Augmented Generation) technology, this AI assistant is trained on comprehensive Jio documentation. 
+                        It can answer questions about plans, services, devices, support, and more with high accuracy.
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold mb-3">🤖 AI-Powered</h3>
+                        <p class="text-gray-600 text-sm">Uses advanced language models to understand and respond to your queries naturally.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold mb-3">📚 Knowledge Base</h3>
+                        <p class="text-gray-600 text-sm">Trained on official Jio documentation and publicly available web-scraped data related to plans and service information.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold mb-3">⚡ Real-time</h3>
+                        <p class="text-gray-600 text-sm">Get instant answers without waiting for customer support.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h3 class="text-lg font-semibold mb-3">🔒 Secure</h3>
+                        <p class="text-gray-600 text-sm">Your conversations are private and secure.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-gray-900 text-white py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold mb-4">Jio AI Assistant</h3>
+                    <p class="text-gray-400 mb-6">Powered by RAG Technology & Advanced AI</p>
+                    <p class="text-sm text-gray-500">© 2025 Jio AI Assistant. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Floating Chatbot Widget -->
+    <div class="chat-widget">
+        <!-- Chat Button -->
+        <div class="chat-button" id="chatButton" onclick="toggleChat()">
+            <svg class="w-8 h-8 text-white" id="chatIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+            </svg>
+            <svg class="w-8 h-8 text-white hidden" id="closeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <div class="notification-badge" id="notificationBadge">1</div>
+        </div>
+
+        <!-- Chat Panel -->
+        <div class="chat-panel" id="chatPanel">
+            <!-- Chat Header -->
+            <div class="jio-gradient px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold text-sm">Jio AI Assistant</h3>
+                        <p class="text-blue-100 text-xs flex items-center gap-1">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            Online
+                        </p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-white hover:bg-white/10 p-2 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message message-bot">
+                    <div class="avatar avatar-bot">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="message-content">
+                            <p class="text-sm">👋 Hello! I'm your Jio AI Assistant. How can I help you today?</p>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-1 ml-2">Just now</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Questions -->
+            <div class="quick-questions">
+                <button class="quick-question-btn" onclick="askQuestion('What are the best 5G plans?')">
+                    🚀 5G Plans
+                </button>
+                <button class="quick-question-btn" onclick="askQuestion('Tell me about JioFiber plans')">
+                    📡 JioFiber
+                </button>
+                <button class="quick-question-btn" onclick="askQuestion('How to recharge?')">
+                    💳 Recharge
+                </button>
+            </div>
+
+            <!-- Input Area -->
+            <form action="/" method="post" class="border-t border-gray-200" id="chatForm">
+                <div class="p-4 flex gap-2">
+                    <input 
+                        type="text" 
+                        name="question" 
+                        id="questionInput"
+                        placeholder="Type your question here..."
+                        class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm"
+                        required
+                    />
+                    <button 
+                        type="submit"
+                        class="jio-gradient text-white p-3 rounded-full hover:shadow-lg transition flex-shrink-0"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function toggleChat() {
+            const chatPanel = document.getElementById('chatPanel');
+            const chatIcon = document.getElementById('chatIcon');
+            const closeIcon = document.getElementById('closeIcon');
+            const badge = document.getElementById('notificationBadge');
+            
+            chatPanel.classList.toggle('active');
+            chatIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('hidden');
+            
+            if (chatPanel.classList.contains('active')) {
+                badge.style.display = 'none';
+                document.getElementById('questionInput').focus();
+                // Scroll to bottom when opening chat
+                setTimeout(scrollToBottom, 100);
+            }
+        }
+
+        function askQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            document.getElementById('questionInput').focus();
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Ensure page loads with chat scrolled to bottom
+        window.addEventListener('load', function() {
+            scrollToBottom();
+        });
+
+        // Show notification after 3 seconds
+        setTimeout(() => {
+            document.getElementById('notificationBadge').style.display = 'flex';
+        }, 3000);
+
+        // Handle chat history from Flask
+        {% if chat_history %}
+        const chatHistory = {{ chat_history | tojson }};
+        const messagesContainer = document.getElementById('chatMessages');
+        
+        // Clear welcome message if there's history
+        if (chatHistory.length > 0) {
+            messagesContainer.innerHTML = '';
+        }
+        
+        // Display chat history
+        for (let i = 0; i < chatHistory.length; i += 2) {
+            if (chatHistory[i]) {
+                addUserMessage(chatHistory[i]);
+            }
+            if (chatHistory[i + 1]) {
+                addBotMessage(chatHistory[i + 1]);
+            }
+        }
+        
+        // Open chat panel if there are messages
+        if (chatHistory.length > 0) {
+            document.getElementById('chatPanel').classList.add('active');
+            document.getElementById('chatIcon').classList.add('hidden');
+            document.getElementById('closeIcon').classList.remove('hidden');
+            document.getElementById('notificationBadge').style.display = 'none';
+        }
+        
+        // Scroll to bottom after loading history
+        setTimeout(scrollToBottom, 100);
+        {% endif %}
+
+        function addUserMessage(text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-user';
+            messageDiv.innerHTML = `
+                <div class="avatar avatar-user">
+                    <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="message-content">
+                        <p class="text-sm">${text}</p>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1 mr-2 text-right">Just now</p>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addBotMessage(text) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message message-bot';
+            messageDiv.innerHTML = `
+                <div class="avatar avatar-bot">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="message-content">
+                        <p class="text-sm">${text}</p>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1 ml-2">Just now</p>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Handle form submission
+        document.getElementById('chatForm').addEventListener('submit', function(e) {
+            const input = document.getElementById('questionInput');
+            const question = input.value.trim();
+            
+            if (question) {
+                addUserMessage(question);
+                
+                // Show typing indicator
+                showTypingIndicator();
+            }
+        });
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typingIndicator';
+            typingDiv.className = 'message message-bot';
+            typingDiv.innerHTML = `
+                <div class="avatar avatar-bot">
+                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+    </script>
+</body>
+
+</html>
