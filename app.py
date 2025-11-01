@@ -1,5 +1,4 @@
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
-from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.schema import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -13,6 +12,7 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain.chains import create_history_aware_retriever, create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_cerebras import ChatCerebras
 from langchain.chains import RetrievalQA
 from dotenv import load_dotenv
 load_dotenv()
@@ -20,23 +20,18 @@ import os
 
 from flask import Flask, render_template, request, jsonify
 
-os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API_KEY")
+CEREBRAS_API_KEY = os.getenv("CEREBRAS_API_KEY")
 
 # Chat history and conversation store
 chat_history = []
 conversation_store = {}
 FAISS_PATH = "faiss"
 
-llm = ChatOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    openai_api_base="https://openrouter.ai/api/v1",
-    model_name="meta-llama/llama-3.3-8b-instruct:free",
-    temperature=0.3,
-    max_tokens=2000,
-    default_headers={
-        "HTTP-Referer": "http://localhost:5000",
-        "X-Title": "Jio AI Assistant"
-    }
+llm = ChatCerebras(
+    api_key= CEREBRAS_API_KEY,
+    model="llama3.1-8b",
+    temperature=0.1,
+    max_tokens=2000
 )
 
 app = Flask(__name__)
@@ -219,14 +214,5 @@ def health():
 
 
 if __name__ == "__main__":
-    print("Starting Jio AI Assistant...")
-    print("Loading embeddings...")
-    
-    try:
-        get_embeddings()
-        print("✅ Embeddings loaded successfully!")
-    except Exception as e:
-        print(f"⚠️ Error loading embeddings: {e}")
-    
-    print("Starting Flask server...")
-    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)  # Disable reloader
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
